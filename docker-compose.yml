@@ -1,0 +1,35 @@
+version: '2'
+
+services:
+  _base:
+    image: openjdk:8-jdk-alpine
+    volumes:
+      - .:/app
+    working_dir: /app
+
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: chief_root
+      MYSQL_DATABASE: oauth2_authserver
+      MYSQL_USER: chief_user
+      MYSQL_PASSWORD: chief_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./db:/docker-entrypoint-initdb.d"
+
+  oauth2-app:
+    extends:
+      service: _base
+    build: .
+    environment:
+      JDBC_URL: jdbc:mysql://db:3306/oauth2_authserver?connectTimeout=0&amp;socketTimeout=0&amp;autoReconnect=true
+      JDBC_USER: chief_user
+      JDBC_PASS: chief_pass
+    command: ["./gradlew", "bootRun"]
+    ports:
+      - "9010:9010"
+    links:
+      - db
+
